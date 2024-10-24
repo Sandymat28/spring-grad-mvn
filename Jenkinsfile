@@ -70,9 +70,9 @@ pipeline {
 
 /*pipeline {
   agent any // Utiliser n'importe quel agent disponible
-  /*tools {
-    Maven maven:3.9.9
-    }*/
+  //tools {
+    //Maven maven:3.9.9
+    //}
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
