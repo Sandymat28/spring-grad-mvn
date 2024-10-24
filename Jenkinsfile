@@ -6,14 +6,6 @@ pipeline {
     PROJECT_DIR = 'complete'
   }
 
-  stage('Navigate to Project Folder') {  // Se déplacer dans le dossier 'complete'
-    steps {
-      dir("${PROJECT_DIR}") { // Exécuter des commandes dans le dossier 'complete'
-      sh 'ls -la'   // Liste les fichiers du dossier
-      }
-    }
-  }
-
   stages {
     stage('build-one') {
       steps {
@@ -23,6 +15,14 @@ pipeline {
         }
       }
     }
+
+    stage('Navigate to Project Folder') {  // Se déplacer dans le dossier 'complete'
+      steps {
+      dir("${PROJECT_DIR}") { // Exécuter des commandes dans le dossier 'complete'
+      sh 'ls -la'   // Liste les fichiers du dossier
+      }
+    }
+  }
     
     stage ('Build-two') {
       steps {
