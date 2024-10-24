@@ -1,44 +1,36 @@
 pipeline {
-	agent none
-
-	triggers {
-		pollSCM 'H/10 * * * *'
-	}
-
-	options {
-		disableConcurrentBuilds()
-		buildDiscarder(logRotator(numToKeepStr: '14'))
-	}
-
-	stages {
-		stage("test: baseline (jdk17)") {
-			agent {
-				docker {
-					image 'harbor-repo.vmware.com/dockerhub-proxy-cache/library/adoptopenjdk/openjdk17:latest'
-					args '-v $HOME/.m2:/tmp/jenkins-home/.m2'
-				}
-			}
-			options { timeout(time: 30, unit: 'MINUTES') }
-			steps {
-				sh 'test/run.sh'
-			}
-		}
-
-	}
-
-	post {
-		changed {
-			script {
-				slackSend(
-						color: (currentBuild.currentResult == 'SUCCESS') ? 'good' : 'danger',
-						channel: '#sagan-content',
-						message: "${currentBuild.fullDisplayName} - `${currentBuild.currentResult}`\n${env.BUILD_URL}")
-				emailext(
-						subject: "[${currentBuild.fullDisplayName}] ${currentBuild.currentResult}",
-						mimeType: 'text/html',
-						recipientProviders: [[$class: 'CulpritsRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-						body: "<a href=\"${env.BUILD_URL}\">${currentBuild.fullDisplayName} is reported as ${currentBuild.currentResult}</a>")
-			}
-		}
-	}
+  agent any // Utiliser n'importe quel agent disponible
+  /*tools {
+    Maven maven:3.9.9
+    }*/
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+  environment {
+    DOCKERHUB_CREDENTIALS = credentials('DOCKER_ACCOUNT')
+  }
+  stages {
+    stage('Build') {
+      steps {
+       //sh 'mvn clean package'
+         sh 'docker build -t matsandy/gradlelari:lts .'
+       //sh 'docker-compose build'
+      }
+    }
+    stage('Login') {
+      steps {
+        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+      }
+    }
+    stage('Push') {
+      steps {
+        sh 'docker push matsandy/gradlelari:lts'
+      }
+    }
+  }
+  post {
+    always {
+      sh 'docker logout'
+    }
+  }
 }
